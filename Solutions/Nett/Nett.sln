@@ -16,6 +16,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nett.TestDecoder", "..\..\Test\Nett.TestDecoder\Nett.TestDecoder.csproj", "{87AD5DA2-6146-4D1F-97B8-37C75F2B2BA5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nett.Coma", "..\..\Source\Nett.Coma\Nett.Coma.csproj", "{4AA5F76B-E7CC-4B30-A3EC-81373835A3F7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nett.Coma.UnitTests", "..\..\Test\Nett.Coma.UnitTests\Nett.Coma.UnitTests.csproj", "{83531A5A-FE0F-497E-8B37-94B19CC266E4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -34,6 +38,14 @@ Global
 		{87AD5DA2-6146-4D1F-97B8-37C75F2B2BA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{87AD5DA2-6146-4D1F-97B8-37C75F2B2BA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{87AD5DA2-6146-4D1F-97B8-37C75F2B2BA5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4AA5F76B-E7CC-4B30-A3EC-81373835A3F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4AA5F76B-E7CC-4B30-A3EC-81373835A3F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4AA5F76B-E7CC-4B30-A3EC-81373835A3F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4AA5F76B-E7CC-4B30-A3EC-81373835A3F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83531A5A-FE0F-497E-8B37-94B19CC266E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83531A5A-FE0F-497E-8B37-94B19CC266E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83531A5A-FE0F-497E-8B37-94B19CC266E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83531A5A-FE0F-497E-8B37-94B19CC266E4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
