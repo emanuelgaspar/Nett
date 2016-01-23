@@ -17,7 +17,7 @@ namespace Nett.Coma.UnitTests
         public void CreatingConfigProxy_EnsuresProxyHasOriginalDefaultValues()
         {
             // Act
-            var cfg = ConfigManager.Setup<Config>(LocalFile);
+            var cfg = ConfigManager.Setup(LocalFile, () => new Config());
 
             // Assert
             cfg.TestInt.Should().Be(Config.DefaultInt);

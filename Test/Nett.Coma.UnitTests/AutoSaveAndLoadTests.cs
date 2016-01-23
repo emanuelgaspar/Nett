@@ -5,17 +5,6 @@ using Xunit;
 
 namespace Nett.Coma.UnitTests
 {
-    //var cfg = ConfigManager.
-    //Config<Root>()
-    //	.Sub()
-    //		.Config<SCA>((r) => r.sca)
-    //			.Sub().
-    //				Config<SCB>((sca) => r.ssc)
-    //			.EndSub()
-    //		.Config((r) => )
-    //	.EndSub()
-    //.Setup();
-
     public sealed class AutoSaveAndLoadTests : IDisposable
     {
         private readonly string LocalFile;
@@ -39,7 +28,7 @@ namespace Nett.Coma.UnitTests
         {
             // Arrange
             const int expected = 1;
-            var cfg = ConfigManager.Setup<Config>(LocalFile);
+            var cfg = ConfigManager.Setup(LocalFile, () => new Config());
 
             // Act
             cfg.TestInt = expected;
@@ -56,7 +45,7 @@ namespace Nett.Coma.UnitTests
             const int expected = 1;
             var writeToDisk = new Config() { TestInt = expected };
             Toml.WriteFile(writeToDisk, LocalFile);
-            var cfg = ConfigManager.Setup<Config>(LocalFile);
+            var cfg = ConfigManager.Setup(LocalFile, () => new Config());
 
             // Act
             var value = cfg.TestInt;
@@ -70,7 +59,7 @@ namespace Nett.Coma.UnitTests
         {
             // Arrange
             const int expected = 1;
-            var cfg = ConfigManager.Setup<ParentConfig>(this.LocalFile);
+            var cfg = ConfigManager.Setup(this.LocalFile, () => new ParentConfig());
 
             // Act
             cfg.SubConfig.TestInt = expected;

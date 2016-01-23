@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Castle.DynamicProxy;
 using static System.Diagnostics.Debug;
 
@@ -6,13 +7,6 @@ namespace Nett.Coma
 {
     public static partial class ConfigManager
     {
-        interface IConfigInterceptor
-        {
-            object ConfigObject { get; }
-            void Save();
-            void Load();
-        }
-
         private abstract class InterceptorBase : IInterceptor
         {
             public abstract object ConfigObject { get; }
@@ -52,43 +46,43 @@ namespace Nett.Coma
         }
 
 
-        private class RootInterceptor<T> : InterceptorBase, IInterceptor, IConfigInterceptor
+        private class RootInterceptor<T> : InterceptorBase
         {
-            private readonly TomlConfig tomlConfig;
-            private readonly string filePath;
+            private readonly ManagedConfig managedConfig;
             private T configObject;
             public override object ConfigObject => this.configObject;
 
-            public RootInterceptor(string filePath, TomlConfig tomlConfig)
+            public RootInterceptor(ManagedConfig managedConfig, Func<T> createConfigObject)
             {
-                this.filePath = filePath;
-                this.tomlConfig = tomlConfig;
+                Assert(managedConfig != null);
+                Assert(createConfigObject != null);
+
+                this.managedConfig = managedConfig;
+                this.configObject = createConfigObject();
             }
 
             public void Init() => this.Load();
-
-            void IInterceptor.Intercept(IInvocation invocation)
-            {
-
-            }
 
             public override void Save()
             {
                 using (new DisableAutoSaveLoadContext(this))
                 {
-                    Toml.WriteFile(this.configObject, this.filePath, this.tomlConfig);
+                    Toml.WriteFile(this.configObject, this.managedConfig.FilePath, this.managedConfig.TomlConfig);
                 }
             }
 
             public override void Load()
             {
-                using (new DisableAutoSaveLoadContext(this))
+                if (File.Exists(this.managedConfig.FilePath))
                 {
-                    this.configObject = Toml.ReadFile<T>(this.filePath, this.tomlConfig);
+                    using (new DisableAutoSaveLoadContext(this))
+                    {
+                        this.configObject = Toml.ReadFile<T>(this.managedConfig.FilePath, this.managedConfig.TomlConfig);
+                    }
                 }
             }
 
-            public class Interceptor : InterceptorBase, IInterceptor, IConfigInterceptor
+            public class Interceptor : InterceptorBase
             {
                 private readonly RootInterceptor<T> root;
                 private readonly InterceptorBase parent;

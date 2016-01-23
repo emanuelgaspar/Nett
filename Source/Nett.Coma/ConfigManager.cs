@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Castle.DynamicProxy;
 
 namespace Nett.Coma
@@ -7,13 +8,13 @@ namespace Nett.Coma
     {
         private static readonly ProxyGenerator proxyGenerator = new ProxyGenerator();
 
-        public static T Setup<T>(string path) where T : class, new()
-            => Setup<T>(path, TomlConfig.DefaultInstance);
+        public static T Setup<T>(string path, Func<T> createInitial) where T : class, new()
+            => Setup<T>(path, createInitial, TomlConfig.DefaultInstance);
 
-        public static T Setup<T>(string path, TomlConfig config) where T : class, new()
+        public static T Setup<T>(string path, Func<T> createInitial, TomlConfig config) where T : class, new()
         {
             var mc = new ManagedConfig(path, config);
-            var interceptor = new RootInterceptor<T>(mc.FilePath, mc.TomlConfig);
+            var interceptor = new RootInterceptor<T>(mc, createInitial);
             interceptor.Init();
 
             var proxy = proxyGenerator.CreateClassProxy<T>(interceptor);
