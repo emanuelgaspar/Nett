@@ -1,94 +1,51 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Linq;
 using Castle.DynamicProxy;
 
 namespace Nett.Coma
 {
-    public static class ConfigManager
+    public static partial class ConfigManager
     {
-        private static readonly Dictionary<Type, ManagedConfig> configs = new Dictionary<Type, ManagedConfig>();
-
         private static readonly ProxyGenerator proxyGenerator = new ProxyGenerator();
 
-        public static T Setup<T>(ConfigScope rootScope) where T : class, new()
+        public static T Setup<T>(string path) where T : class, new()
+            => Setup<T>(path, TomlConfig.DefaultInstance);
+
+        public static T Setup<T>(string path, TomlConfig config) where T : class, new()
         {
-            var interceptor = new Interceptor();
+            var mc = new ManagedConfig(path, config);
+            var interceptor = new RootInterceptor<T>(mc.FilePath, mc.TomlConfig);
+            interceptor.Init();
+
             var proxy = proxyGenerator.CreateClassProxy<T>(interceptor);
-            configs[typeof(T)] = new ManagedConfig(rootScope);
+            GenerateSubProxies(proxy, interceptor, interceptor, mc);
             return proxy;
         }
 
-        private class Interceptor : IInterceptor
+        private static void GenerateSubProxies<T>(object parentProxy, RootInterceptor<T> root, InterceptorBase parent, ManagedConfig managedConfig) where T : class, new()
         {
-            private bool autoSaveLoadDisabled = false;
-
-            void IInterceptor.Intercept(IInvocation invocation)
+            foreach (var p in parentProxy.GetType().GetProperties())
             {
-                if (invocation.Method.Name.StartsWith("set_"))
+                if (managedConfig.TomlConfig.GetAllToTomlConverters(p.PropertyType).FirstOrDefault() == null)
                 {
-                    invocation.Proceed();
-                    if (!this.autoSaveLoadDisabled)
-                    {
-                        this.Save(invocation);
-                    }
+                    var interceptor = new RootInterceptor<T>.Interceptor(root, parent, p.Name);
+                    var subProxy = proxyGenerator.CreateClassProxy(p.PropertyType, new RootInterceptor<T>.Interceptor(root, parent, p.Name));
+                    GenerateSubProxies(subProxy, root, interceptor, managedConfig);
 
-                }
-                else if (invocation.Method.Name.StartsWith("get_"))
-                {
-                    if (!this.autoSaveLoadDisabled)
-                    {
-                        this.Load(invocation);
-                    }
-
-                    invocation.Proceed();
-                }
-            }
-
-            private void Save(IInvocation invocation)
-            {
-                using (new DisableAutoSaveLoadContext(this))
-                {
-                    var mc = configs[invocation.TargetType];
-                    Toml.WriteFile(invocation.InvocationTarget, mc.RootScope.ConfigFilePath);
-                }
-            }
-
-            private void Load(IInvocation invocation)
-            {
-                using (new DisableAutoSaveLoadContext(this))
-                {
-                    var mc = configs[invocation.TargetType];
-                    var table = Toml.ReadFile(mc.RootScope.ConfigFilePath);
-                    var prpName = invocation.Method.Name.Substring("get_".Length);
-                    var prop = invocation.InvocationTarget.GetType().GetProperty(prpName);
-                    prop.SetValue(invocation.InvocationTarget, table.Get(prpName).Get(prop.PropertyType), null);
-                }
-            }
-
-            private class DisableAutoSaveLoadContext : IDisposable
-            {
-                private readonly Interceptor interceptor;
-
-                public DisableAutoSaveLoadContext(Interceptor interceptor)
-                {
-                    this.interceptor = interceptor;
-                    this.interceptor.autoSaveLoadDisabled = true;
-                }
-
-                public void Dispose()
-                {
-                    this.interceptor.autoSaveLoadDisabled = false;
+                    p.SetValue(parentProxy, subProxy, null);
                 }
             }
         }
 
         private class ManagedConfig
         {
-            public ConfigScope RootScope { get; }
+            public string FilePath { get; }
+            public TomlConfig TomlConfig { get; }
+            public object ConfigObjectRoot { get; set; }
 
-            public ManagedConfig(ConfigScope rootScope)
+            public ManagedConfig(string filePath, TomlConfig tomlConfig)
             {
-                this.RootScope = rootScope;
+                this.FilePath = filePath;
+                this.TomlConfig = tomlConfig;
             }
         }
     }

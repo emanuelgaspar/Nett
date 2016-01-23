@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Nett
 {
@@ -9,12 +6,15 @@ namespace Nett
     {
         Type FromType { get; }
         Type ToType { get; }
-
-        object Convert(object value);
     }
 
-    public interface ITomlConverter<TFrom, TTo> : ITomlConverter
+    public interface IToTomlConverter : ITomlConverter
     {
-        TTo Convert(TFrom src);
+        TomlObject Convert(object from);
+    }
+
+    public interface IFromTomlConverter : ITomlConverter
+    {
+        object Convert(TomlObject from);
     }
 }

@@ -45,7 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigManager.cs" />
-    <Compile Include="ConfigScope.cs" />
+    <Compile Include="ConfigManager.RootInterceptor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

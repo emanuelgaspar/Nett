@@ -1,56 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Nett
 {
     public sealed partial class TomlConfig
     {
-        //public IFrom AddConversion() => new From(this);
-
-        //private class From : IFrom
-        //{
-        //    private readonly TomlConfig config;
-        //    public From(TomlConfig config)
-        //    {
-        //        Debug.Assert(config != null);
-        //        this.config = config;
-        //    }
-
-        //    public Type FromType { get; }
-
-        //    ITo<T> IFrom.From<T>() => new To<T>(this.config);
-        //}
-
-        //private sealed class To<TFrom> : ITo<TFrom>
-        //{
-        //    private readonly TomlConfig config;
-
-        //    public To(TomlConfig config)
-        //    {
-        //        Debug.Assert(config != null);
-        //        this.config = config;
-        //    }
-        //    IAs<TFrom, T> ITo<TFrom>.To<T>() => new As<TFrom, T>(this.config);
-        //}
-
-        //internal sealed class As<TFrom, TTo> : IAs<TFrom, TTo>
-        //{
-        //    private readonly TomlConfig config;
-
-        //    public As(TomlConfig config)
-        //    {
-        //        Debug.Assert(config != null);
-        //        this.config = config;
-        //    }
-
-        //    TomlConfig IAs<TFrom, TTo>.As(Func<TFrom, TTo> convert)
-        //    {
-        //        var conv = new TomlConverter<TFrom, TTo>(convert);
-        //        this.config.AddConverter(conv);
-        //        return this.config;
-        //    }
-        //}
-
         public IConfigureTypeStart<T> ConfigureType<T>() => new TypeConfigurator<T>(this);
 
         public interface IConfigureTypeStart<T>
@@ -115,6 +71,9 @@ namespace Nett
             public TomlConfig Apply() => this.config;
         }
 
+        internal IEnumerable<IToTomlConverter> GetAllToTomlConverters(Type from) =>
+            this.toTomlConverters.Where(c => c.FromType == from);
+
         private abstract class CastConfigurator<T>
         {
             protected readonly TomlConfig config;
@@ -130,7 +89,7 @@ namespace Nett
             }
         }
 
-        private class ToTomlCastConfigurator<T, TFrom, TTo> : CastConfigurator<T>, IConfigureCast<T, TFrom, TTo>
+        private class ToTomlCastConfigurator<T, TFrom, TTo> : CastConfigurator<T>, IConfigureCast<T, TFrom, TTo> where TTo : TomlObject
         {
             public ToTomlCastConfigurator(TomlConfig config, TypeConfigurator<T> typeConfig) :
                 base(config, typeConfig)
@@ -139,13 +98,13 @@ namespace Nett
 
             public IConfigureTypeCombiner<T> As(Func<TFrom, TTo> cast)
             {
-                var conv = new TomlConverter<TFrom, TTo>(cast);
-                config.toTomlConverters.Add(conv.FromType, conv);
+                var conv = new ToTomlConverter<TFrom, TTo>(cast);
+                config.toTomlConverters.Add(conv);
                 return this.typeConfig;
             }
         }
 
-        private class FromTomlCastConfigurator<T, TFrom, TTo> : CastConfigurator<T>, IConfigureCast<T, TFrom, TTo>
+        private class FromTomlCastConfigurator<T, TFrom, TTo> : CastConfigurator<T>, IConfigureCast<T, TFrom, TTo> where TFrom : TomlObject
         {
             public FromTomlCastConfigurator(TomlConfig config, TypeConfigurator<T> typeConfig)
                 : base(config, typeConfig)
@@ -154,8 +113,8 @@ namespace Nett
 
             public IConfigureTypeCombiner<T> As(Func<TFrom, TTo> cast)
             {
-                var conv = new TomlConverter<TFrom, TTo>(cast);
-                config.fromTomlConverters.Add(conv.ToType, conv);
+                var conv = new FromTomlConverter<TFrom, TTo>(cast);
+                config.fromTomlConverters.Add(conv);
                 return this.typeConfig;
             }
         }

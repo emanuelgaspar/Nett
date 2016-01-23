@@ -87,7 +87,6 @@
       <DependentUpon>TomlConfig.cs</DependentUpon>
     </Compile>
     <Compile Include="TomlConfig.cs" />
-    <Compile Include="TomlConverter.cs" />
     <Compile Include="TomlConverterBase.cs" />
     <Compile Include="TomlDateTime.cs" />
     <Compile Include="TomlFloat.cs" />

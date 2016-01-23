@@ -63,21 +63,20 @@ namespace Nett
 
             var result = config.GetActivatedInstance(t);
 
-            foreach (var p in this.Rows)
+            foreach (var r in this.Rows)
             {
-                var targetProperty = result.GetType().GetProperty(p.Key);
+                var targetProperty = result.GetType().GetProperty(r.Key);
                 if (targetProperty != null)
                 {
-                    var converter = config.GetFromTomlConverter(targetProperty.PropertyType);
+                    var converter = config.GetFromTomlConverter(targetProperty.PropertyType, r.Value.GetType());
                     if (converter != null)
                     {
-                        var src = p.Value.Get(converter.FromType, config);
-                        var val = converter.Convert(src);
+                        var val = converter.Convert(r.Value);
                         targetProperty.SetValue(result, val, null);
                     }
                     else
                     {
-                        targetProperty.SetValue(result, p.Value.Get(targetProperty.PropertyType, config), null);
+                        targetProperty.SetValue(result, r.Value.Get(targetProperty.PropertyType, config), null);
                     }
                 }
             }

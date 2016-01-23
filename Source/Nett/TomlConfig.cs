@@ -15,59 +15,74 @@ namespace Nett
     {
         internal static readonly TomlConfig DefaultInstance = Create();
 
-        private readonly Dictionary<Type, ITomlConverter> fromTomlConverters = new Dictionary<Type, ITomlConverter>();
-        private readonly Dictionary<Type, ITomlConverter> toTomlConverters = new Dictionary<Type, ITomlConverter>();
-        private readonly Dictionary<Type, Func<object>> activators = new Dictionary<Type, Func<object>>();
+        private readonly List<IToTomlConverter> toTomlConverters = new List<IToTomlConverter>();
+        private readonly List<IFromTomlConverter> fromTomlConverters = new List<IFromTomlConverter>();
         private readonly HashSet<Type> inlineTableTypes = new HashSet<Type>();
+        private readonly Dictionary<Type, Func<object>> activators = new Dictionary<Type, Func<object>>();
 
         private TomlCommentLocation DefaultCommentLocation = TomlCommentLocation.Prepend;
         private TomlConfig()
         {
-            // TomlInt
-            this.AddFromTomlConverter(new TomlConverter<TomlInt, char>(t => (char)t.Value));
-            this.AddFromTomlConverter(new TomlConverter<TomlInt, byte>(t => (byte)t.Value));
-            this.AddFromTomlConverter(new TomlConverter<TomlInt, int>(t => (int)t.Value));
-            this.AddFromTomlConverter(new TomlConverter<TomlInt, short>(t => (short)t.Value));
-            this.AddFromTomlConverter(new TomlConverter<TomlInt, long>(t => (long)t.Value));
-
-            // TomlFloat
-            this.AddFromTomlConverter(new TomlConverter<TomlFloat, double>(t => t.Value));
-            this.AddFromTomlConverter(new TomlConverter<TomlFloat, float>(t => (float)t.Value));
-
-            // TomlString
-            this.AddFromTomlConverter(new TomlConverter<TomlString, string>(t => t.Value));
-
-            // TomlDateTime
-            this.AddFromTomlConverter(new TomlConverter<TomlDateTime, DateTime>(t => t.Value.UtcDateTime));
-            this.AddFromTomlConverter(new TomlConverter<TomlDateTime, DateTimeOffset>(t => t.Value));
-
-            // TomlTimeSpan
-            this.AddFromTomlConverter(new TomlConverter<TomlTimeSpan, TimeSpan>(t => t.Value));
-
-            // TomlBool
-            this.AddFromTomlConverter(new TomlConverter<TomlBool, bool>(t => t.Value));
+            this.AddStandardTomlConverters();
         }
 
-        private void AddFromTomlConverter(ITomlConverter converter)
+        private void AddStandardTomlConverters()
         {
-            this.fromTomlConverters[converter.ToType] = converter;
+            // Do not change the order of operations here, registrations that happen first are considered the better conversion
+            // There are code issues that cannot specify both types, in such cases the choose the best one by taking the first found in the list.
+            // Generic converters (needed by the from methods that generically transform CLR objects to the best equivalent TOML object)
+            this.AddToTomlConverter<int, TomlValue>(i => new TomlInt(i));
+            this.AddToTomlConverter<long, TomlValue>(l => new TomlInt(l));
+            this.AddToTomlConverter<float, TomlValue>(f => new TomlFloat(f));
+            this.AddToTomlConverter<double, TomlValue>(d => new TomlFloat(d));
+            this.AddToTomlConverter<string, TomlValue>(s => new TomlString(s));
+            this.AddToTomlConverter<DateTime, TomlValue>(dt => new TomlDateTime(dt));
+            this.AddToTomlConverter<TimeSpan, TomlValue>(ts => new TomlTimeSpan(ts));
+
+            // TomlInt
+            this.AddBidirectionalConverter<TomlInt, int>(t => (int)t.Value, v => new TomlInt(v));
+            this.AddBidirectionalConverter<TomlInt, long>(t => t.Value, v => new TomlInt(v));
+            this.AddBidirectionalConverter<TomlInt, char>(t => (char)t.Value, v => new TomlInt(v));
+            this.AddBidirectionalConverter<TomlInt, byte>(t => (byte)t.Value, v => new TomlInt(v));
+            this.AddBidirectionalConverter<TomlInt, short>(t => (short)t.Value, v => new TomlInt(v));
+
+            // TomlFloat
+            this.AddBidirectionalConverter<TomlFloat, double>(t => t.Value, v => new TomlFloat(v));
+            this.AddBidirectionalConverter<TomlFloat, float>(t => (float)t.Value, v => new TomlFloat(v));
+
+            // TomlString
+            this.AddBidirectionalConverter<TomlString, string>(t => t.Value, v => new TomlString(v));
+
+            // TomlDateTime
+            this.AddBidirectionalConverter<TomlDateTime, DateTime>(t => t.Value.UtcDateTime, v => new TomlDateTime(v));
+            this.AddBidirectionalConverter<TomlDateTime, DateTimeOffset>(t => t.Value, v => new TomlDateTime(v));
+
+            // TomlTimeSpan
+            this.AddBidirectionalConverter<TomlTimeSpan, TimeSpan>(t => t.Value, v => new TomlTimeSpan(v));
+
+            // TomlBool
+            this.AddBidirectionalConverter<TomlBool, bool>(t => t.Value, v => new TomlBool(v));
+        }
+
+        private void AddToTomlConverter<TFrom, TTo>(Func<TFrom, TTo> toToml) where TTo : TomlValue =>
+            this.toTomlConverters.Add(new ToTomlConverter<TFrom, TTo>(toToml));
+
+        private void AddBidirectionalConverter<TA, TB>(Func<TA, TB> fromToml, Func<TB, TA> toToml) where TA : TomlValue
+        {
+            this.fromTomlConverters.Add(new FromTomlConverter<TA, TB>(fromToml));
+            this.toTomlConverters.Add(new ToTomlConverter<TB, TA>(toToml));
         }
 
         public static TomlConfig Create() => new TomlConfig();
 
-        internal ITomlConverter GetFromTomlConverter(Type toType)
-        {
-            ITomlConverter conv;
-            this.fromTomlConverters.TryGetValue(toType, out conv);
-            return conv;
-        }
+        internal IEnumerable<IToTomlConverter> GetConvertersFromTypeToToml(Type from)
+            => this.toTomlConverters.Where(c => c.FromType == from);
 
-        internal ITomlConverter GetToTomlConverter(Type fromType)
-        {
-            ITomlConverter conv;
-            this.toTomlConverters.TryGetValue(fromType, out conv);
-            return conv;
-        }
+        internal IFromTomlConverter GetFromTomlConverter(Type toType, Type fromType)
+            => this.fromTomlConverters.FirstOrDefault(c => c.ToType == toType && c.FromType == fromType);
+
+        internal IToTomlConverter GetToTomlConverer(Type toType, Type fromType)
+            => this.toTomlConverters.FirstOrDefault(c => c.ToType == toType && c.FromType == fromType);
 
         internal object GetActivatedInstance(Type t)
         {

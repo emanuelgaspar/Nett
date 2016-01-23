@@ -57,9 +57,6 @@ namespace Nett
             throw new NotSupportedException(string.Format("Cannot create TOML value from '{0}'.", targetType.FullName));
         }
 
-        internal static bool CanCreateFrom(Type t) =>
-            t == StringType || t == TimespanType || IsFloatType(t) || IsIntegerType(t) || t == DateTimeType || t == BoolType;
-
         private static bool IsIntegerType(Type t)
         {
             for (int i = 0; i < IntTypes.Length; i++)
@@ -79,7 +76,6 @@ namespace Nett
     [DebuggerDisplay("{value}:{typeof(T).FullName}")]
     public abstract class TomlValue<T> : TomlValue
     {
-        private static readonly Type ValueType = typeof(T);
         private readonly T value;
         public T Value => this.value;
 
@@ -92,7 +88,7 @@ namespace Nett
         {
             if (this.GetType() == t) { return this; }
 
-            var converter = config.GetFromTomlConverter(t);
+            var converter = config.GetFromTomlConverter(t, this.GetType());
             if (converter != null)
             {
                 return converter.Convert(this);
