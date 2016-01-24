@@ -29,8 +29,8 @@ namespace Nett
         private void AddStandardTomlConverters()
         {
             // Do not change the order of operations here, registrations that happen first are considered the better conversion
-            // There are code issues that cannot specify both types, in such cases the choose the best one by taking the first found in the list.
-            // Generic converters (needed by the from methods that generically transform CLR objects to the best equivalent TOML object)
+
+            // Generic converters (needed by the from methods that generically transform CLR objects to the 'best' equivalent TOML object)
             this.AddToTomlConverter<int, TomlValue>(i => new TomlInt(i));
             this.AddToTomlConverter<long, TomlValue>(l => new TomlInt(l));
             this.AddToTomlConverter<float, TomlValue>(f => new TomlFloat(f));
