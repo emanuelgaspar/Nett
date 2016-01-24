@@ -45,7 +45,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigManager.cs" />
-    <Compile Include="ConfigManager.RootInterceptor.cs" />
+    <Compile Include="ConfigManager.Interceptor.cs">
+      <DependentUpon>ConfigManager.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ConfigManager.RootInterceptor.cs">
+      <DependentUpon>ConfigManager.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

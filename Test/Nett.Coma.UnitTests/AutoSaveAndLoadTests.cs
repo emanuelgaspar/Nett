@@ -7,12 +7,7 @@ namespace Nett.Coma.UnitTests
 {
     public sealed class AutoSaveAndLoadTests : IDisposable
     {
-        private readonly string LocalFile;
-
-        public AutoSaveAndLoadTests()
-        {
-            this.LocalFile = $"{Guid.NewGuid()}.toml";
-        }
+        private static string GenFileName() => $"{Guid.NewGuid()}.toml";
 
         public void Dispose()
         {
@@ -28,13 +23,14 @@ namespace Nett.Coma.UnitTests
         {
             // Arrange
             const int expected = 1;
-            var cfg = ConfigManager.Setup(LocalFile, () => new Config());
+            var f = GenFileName();
+            var cfg = ConfigManager.Setup(f, () => new Config());
 
             // Act
             cfg.TestInt = expected;
 
             // Assert
-            var read = Toml.ReadFile<Config>(LocalFile);
+            var read = Toml.ReadFile<Config>(f);
             read.TestInt.Should().Be(expected);
         }
 
@@ -42,10 +38,11 @@ namespace Nett.Coma.UnitTests
         public void GetingProperty_ExecutesLoadBeforeTheGetter()
         {
             // Arrange
+            var f = GenFileName();
             const int expected = 1;
             var writeToDisk = new Config() { TestInt = expected };
-            Toml.WriteFile(writeToDisk, LocalFile);
-            var cfg = ConfigManager.Setup(LocalFile, () => new Config());
+            Toml.WriteFile(writeToDisk, f);
+            var cfg = ConfigManager.Setup(f, () => new Config());
 
             // Act
             var value = cfg.TestInt;
@@ -59,13 +56,14 @@ namespace Nett.Coma.UnitTests
         {
             // Arrange
             const int expected = 1;
-            var cfg = ConfigManager.Setup(this.LocalFile, () => new ParentConfig());
+            var f = GenFileName();
+            var cfg = ConfigManager.Setup(f, () => new ParentConfig());
 
             // Act
             cfg.SubConfig.TestInt = expected;
 
             // Assert
-            var read = Toml.ReadFile<ParentConfig>(LocalFile);
+            var read = Toml.ReadFile<ParentConfig>(f);
             read.SubConfig.TestInt.Should().Be(expected);
         }
 

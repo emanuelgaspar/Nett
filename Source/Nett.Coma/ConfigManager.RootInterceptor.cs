@@ -1,52 +1,12 @@
 ﻿using System;
 using System.IO;
-using Castle.DynamicProxy;
 using static System.Diagnostics.Debug;
 
 namespace Nett.Coma
 {
     public static partial class ConfigManager
     {
-        private abstract class InterceptorBase : IInterceptor
-        {
-            public abstract object ConfigObject { get; }
-            protected bool autoSaveLoadDisabled = false;
-
-            public void Intercept(IInvocation invocation)
-            {
-                if (invocation.Method.Name.StartsWith("set_"))
-                {
-                    var prop = this.ConfigObject.GetType().GetProperty(invocation.Method.Name.Substring("set_".Length));
-                    prop.SetValue(this.ConfigObject, invocation.GetArgumentValue(0), null);
-
-                    if (!this.autoSaveLoadDisabled)
-                    {
-                        this.Save();
-                    }
-
-                }
-                else if (invocation.Method.Name.StartsWith("get_"))
-                {
-                    if (!this.autoSaveLoadDisabled)
-                    {
-                        this.Load();
-                    }
-
-                    var prop = this.ConfigObject.GetType().GetProperty(invocation.Method.Name.Substring("get_".Length));
-                    var value = prop.GetValue(this.ConfigObject, null);
-                    invocation.ReturnValue = value;
-                }
-            }
-
-            public object GetConfigObjectValue(string propertyName) =>
-                this.ConfigObject.GetType().GetProperty(propertyName).GetValue(this.ConfigObject, null);
-
-            public abstract void Save();
-            public abstract void Load();
-        }
-
-
-        private class RootInterceptor<T> : InterceptorBase
+        private class RootInterceptor<T> : Interceptor
         {
             private readonly ManagedConfig managedConfig;
             private T configObject;
@@ -61,7 +21,11 @@ namespace Nett.Coma
                 this.configObject = createConfigObject();
             }
 
-            public void Init() => this.Load();
+            public override void Activate()
+            {
+                this.Load();
+                base.Activate();
+            }
 
             public override void Save()
             {
@@ -82,15 +46,15 @@ namespace Nett.Coma
                 }
             }
 
-            public class Interceptor : InterceptorBase
+            public class SubInterceptor : Interceptor
             {
                 private readonly RootInterceptor<T> root;
-                private readonly InterceptorBase parent;
+                private readonly Interceptor parent;
                 private readonly string configObjectPropertyName;
 
                 public override object ConfigObject => this.parent.ConfigObject.GetType().GetProperty(this.configObjectPropertyName).GetValue(this.parent.ConfigObject, null);
 
-                public Interceptor(RootInterceptor<T> root, InterceptorBase parent, string propertyName)
+                public SubInterceptor(RootInterceptor<T> root, Interceptor parent, string propertyName)
                 {
                     Assert(root != null);
                     Assert(parent != null);
