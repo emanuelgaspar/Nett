@@ -39,10 +39,14 @@ namespace Nett.Coma.UnitTests
         {
             // Arrange
             var f = GenFileName();
+            const int notExpected = 0;
             const int expected = 1;
-            var writeToDisk = new Config() { TestInt = expected };
+            var writeToDisk = new Config() { TestInt = notExpected };
             Toml.WriteFile(writeToDisk, f);
             var cfg = ConfigManager.Setup(f, () => new Config());
+
+            var simulateExternalWrite = new Config() { TestInt = expected };
+            Toml.WriteFile(simulateExternalWrite, f);
 
             // Act
             var value = cfg.TestInt;
