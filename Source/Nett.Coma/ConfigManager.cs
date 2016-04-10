@@ -8,10 +8,10 @@ namespace Nett.Coma
     {
         private static readonly ProxyGenerator proxyGenerator = new ProxyGenerator();
 
-        public static T Setup<T>(string path, Func<T> createInitial) where T : class, new()
+        public static T Setup<T>(string path, Func<T> createInitial) where T : class
             => Setup<T>(path, createInitial, TomlConfig.DefaultInstance);
 
-        public static T Setup<T>(string path, Func<T> createInitial, TomlConfig config) where T : class, new()
+        public static T Setup<T>(string path, Func<T> createInitial, TomlConfig config) where T : class
         {
             var mc = new ManagedConfig(path, config);
             var interceptor = new RootInterceptor<T>(mc, createInitial);
@@ -22,7 +22,7 @@ namespace Nett.Coma
             return proxy;
         }
 
-        private static void GenerateSubProxies<T>(object parentProxy, RootInterceptor<T> root, Interceptor parent, ManagedConfig managedConfig) where T : class, new()
+        private static void GenerateSubProxies<T>(object parentProxy, RootInterceptor<T> root, Interceptor parent, ManagedConfig managedConfig) where T : class
         {
             foreach (var p in parentProxy.GetType().GetProperties())
             {
