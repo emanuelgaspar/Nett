@@ -8,11 +8,11 @@ namespace Nett.Coma
     {
         private class RootInterceptor<T> : Interceptor
         {
-            private readonly ManagedConfig managedConfig;
+            private readonly ManagedConfig<T> managedConfig;
             private T configObject;
             public override object ConfigObject => this.configObject;
 
-            public RootInterceptor(ManagedConfig managedConfig, Func<T> createConfigObject)
+            public RootInterceptor(ManagedConfig<T> managedConfig, Func<T> createConfigObject)
             {
                 Assert(managedConfig != null);
                 Assert(createConfigObject != null);
@@ -31,7 +31,7 @@ namespace Nett.Coma
             {
                 using (new DisableAutoSaveLoadContext(this))
                 {
-                    Toml.WriteFile(this.configObject, this.managedConfig.FilePath, this.managedConfig.TomlConfig);
+                    this.managedConfig.Save(this.configObject);
                 }
             }
 
@@ -41,7 +41,7 @@ namespace Nett.Coma
                 {
                     using (new DisableAutoSaveLoadContext(this))
                     {
-                        this.configObject = Toml.ReadFile<T>(this.managedConfig.FilePath, this.managedConfig.TomlConfig);
+                        this.configObject = this.managedConfig.Load();
                     }
                 }
             }

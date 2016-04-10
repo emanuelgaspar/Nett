@@ -13,7 +13,7 @@ namespace Nett.Coma
 
         public static T Setup<T>(string path, Func<T> createInitial, TomlConfig config) where T : class
         {
-            var mc = new ManagedConfig(path, config);
+            var mc = new ManagedConfig<T>(path, config);
             var interceptor = new RootInterceptor<T>(mc, createInitial);
 
             var proxy = proxyGenerator.CreateClassProxy<T>(interceptor);
@@ -22,7 +22,7 @@ namespace Nett.Coma
             return proxy;
         }
 
-        private static void GenerateSubProxies<T>(object parentProxy, RootInterceptor<T> root, Interceptor parent, ManagedConfig managedConfig) where T : class
+        private static void GenerateSubProxies<T>(object parentProxy, RootInterceptor<T> root, Interceptor parent, ManagedConfig<T> managedConfig) where T : class
         {
             foreach (var p in parentProxy.GetType().GetProperties())
             {
@@ -37,7 +37,7 @@ namespace Nett.Coma
             }
         }
 
-        private class ManagedConfig
+        private class ManagedConfig<T>
         {
             public string FilePath { get; }
             public TomlConfig TomlConfig { get; }
@@ -47,6 +47,16 @@ namespace Nett.Coma
             {
                 this.FilePath = filePath;
                 this.TomlConfig = tomlConfig;
+            }
+
+            public void Save(T toSave)
+            {
+                Toml.WriteFile(toSave, this.FilePath, this.TomlConfig);
+            }
+
+            public T Load()
+            {
+                return Toml.ReadFile<T>(this.FilePath, this.TomlConfig);
             }
         }
     }
