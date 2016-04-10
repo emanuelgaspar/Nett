@@ -39,25 +39,22 @@ namespace Nett.Coma
 
         private class ManagedConfig<T>
         {
-            public string FilePath { get; }
+            private readonly ISaveLoad<T> saveAndLoad;
+
             public TomlConfig TomlConfig { get; }
-            public object ConfigObjectRoot { get; set; }
+            //public object ConfigObjectRoot { get; set; }
 
             public ManagedConfig(string filePath, TomlConfig tomlConfig)
             {
-                this.FilePath = filePath;
                 this.TomlConfig = tomlConfig;
+                this.saveAndLoad = new SingleFileSaveAndLoad<T>(filePath, tomlConfig);
             }
 
-            public void Save(T toSave)
-            {
-                Toml.WriteFile(toSave, this.FilePath, this.TomlConfig);
-            }
+            public bool CanLoad() => this.saveAndLoad.CanLoad();
 
-            public T Load()
-            {
-                return Toml.ReadFile<T>(this.FilePath, this.TomlConfig);
-            }
+            public void Save(T toSave) => this.saveAndLoad.Save(toSave);
+
+            public T Load() => this.saveAndLoad.Load();
         }
     }
 }

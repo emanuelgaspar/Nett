@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using static System.Diagnostics.Debug;
 
 namespace Nett.Coma
@@ -37,7 +36,7 @@ namespace Nett.Coma
 
             public override void Load()
             {
-                if (File.Exists(this.managedConfig.FilePath))
+                if (this.managedConfig.CanLoad())
                 {
                     using (new DisableAutoSaveLoadContext(this))
                     {
