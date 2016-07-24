@@ -79,6 +79,11 @@
 
                 return val;
             }
+
+            internal set
+            {
+                this.Rows[key] = value;
+            }
         }
 
         public T Get<T>(string key) => this[key].Get<T>();
