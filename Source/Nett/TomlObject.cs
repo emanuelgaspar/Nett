@@ -23,7 +23,6 @@
             this.Comments = new List<TomlComment>();
         }
 
-        [Flags]
         public enum TomlObjectType
         {
             Bool,
