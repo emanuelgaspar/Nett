@@ -5,7 +5,7 @@
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
-    using Extensions;
+    using LinqExtensions;
 
     public abstract class TomlObject
     {
