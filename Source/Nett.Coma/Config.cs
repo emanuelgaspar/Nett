@@ -1,11 +1,10 @@
 ﻿namespace Nett.Coma
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using Nett.Extensions;
 
-    public class Config
+    public sealed class Config
     {
         private IMergeableConfig persistable;
 
@@ -36,10 +35,19 @@
 
             var cfg = createDefault();
 
-            var persisted = ((ISourceFactory)source).CreateMergedPersistable();
+            var persisted = ((IMergedSourceFactory)source).CreateMergedPersistable();
             persisted.EnsureExists(Toml.Create(cfg));
 
             return new Config<T>(persisted);
+        }
+
+        internal bool Clear(TPath path)
+        {
+            var src = ((TomlSource)path.Apply(this.persistable.LoadSourcesTable())).Value;
+            var sourceTable = this.persistable.Load(src);
+            var wasRemoved = path.ClearFrom(sourceTable);
+            this.persistable.Save(sourceTable, src);
+            return wasRemoved;
         }
 
         public TRet Get<TRet>(Func<TomlTable, TRet> getter)
@@ -84,12 +92,5 @@
         }
 
         public TomlTable Unmanaged() => this.persistable.Load();
-
-        internal IConfigSource GetSource(IList<string> keyChain)
-        {
-            var table = this.persistable.LoadSourcesTable();
-            var source = table.ResolveKeyChain<TomlSource>(keyChain);
-            return source.Value;
-        }
     }
 }

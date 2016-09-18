@@ -31,6 +31,8 @@
         public void Save(TomlTable content)
         {
             this.persistable.Save(content);
+            this.loaded = content;
+            this.loadedSourcesTable = this.persistable.TransformToSourceTable(this.loaded);
         }
 
         public bool WasChangedExternally() => this.persistable.WasChangedExternally();
@@ -40,7 +42,7 @@
             if (this.loaded == null || this.persistable.WasChangedExternally())
             {
                 this.loaded = this.persistable.Load();
-                this.loadedSourcesTable = this.persistable.LoadSourcesTable();
+                this.loadedSourcesTable = this.persistable.TransformToSourceTable(this.loaded);
             }
         }
 

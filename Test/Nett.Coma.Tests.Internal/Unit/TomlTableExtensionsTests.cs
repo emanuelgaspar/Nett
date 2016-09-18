@@ -1,6 +1,6 @@
 ﻿using System;
 using FluentAssertions;
-using Nett.Coma.Tests.TestData;
+using Nett.Coma.Test.Util;
 using Nett.UnitTests.Util;
 
 namespace Nett.Coma.Tests.Unit

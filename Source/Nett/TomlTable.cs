@@ -102,6 +102,8 @@
         /*public void Add(string key, double @float) => this.Add(key, new TomlFloat(this.MetaData, @float));
         public void Add(string key, string @string) => this.Add(key, new TomlString(this.MetaData, @string));*/
 
+        public bool Remove(string key) => this.Rows.Remove(key);
+
         public override object Get(Type t)
         {
             if (t == TomlTableType) { return this; }
